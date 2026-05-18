@@ -3,14 +3,16 @@ import SearchBar from './components/SearchBar'
 import FoodList from './components/FoodList'
 
 function App() {
+  const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
 
-  const handleSearch = async (query) => {
+  const handleSearch = async (searchQuery) => {
+    setQuery(searchQuery)
     setLoading(true)
 
     try {
-      const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&json=1&page_size=10`
+      const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(searchQuery)}&json=1&page_size=10`
       const response = await fetch(url)
       const data = await response.json()
 
@@ -31,7 +33,11 @@ function App() {
       <SearchBar onSearch={handleSearch} />
       {loading && <p className="loading">Loading...</p>}
       {!loading && results.length === 0 && (
-        <p className="empty-state">Search for a food above to see its nutrition info.</p>
+        <p className="empty-state">
+          {query
+            ? `No results found for “${query}”. Try a different search.`
+            : 'Search for a food above to see its nutrition info.'}
+        </p>
       )}
       <FoodList products={results} />
     </div>
