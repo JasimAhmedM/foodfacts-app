@@ -25,7 +25,7 @@ function HomePage() {
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
         Type a food name to search real nutrition data.
       </Typography>
-      <SearchBar onSearch={handleSearch} />
+      <SearchBar onSearch={handleSearch} loading={loading} />
       {error && <ErrorMessage message={error} />}
       {loading && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>

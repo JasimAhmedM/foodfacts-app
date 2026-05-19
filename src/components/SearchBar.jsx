@@ -4,7 +4,7 @@ import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import SearchIcon from '@mui/icons-material/Search'
 
-function SearchBar({ onSearch }) {
+function SearchBar({ onSearch, loading }) {
   const [query, setQuery] = useState('')
   const [validationError, setValidationError] = useState('')
 
@@ -42,6 +42,7 @@ function SearchBar({ onSearch }) {
           type="submit"
           variant="contained"
           size="large"
+          disabled={loading}
           startIcon={<SearchIcon />}
           sx={{ flexShrink: 0 }}
         >
