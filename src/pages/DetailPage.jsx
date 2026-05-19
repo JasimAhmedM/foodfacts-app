@@ -1,22 +1,42 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useSelector, useDispatch } from 'react-redux'
+import { addItem, removeItem } from '../store/savedSlice'
 import axios from 'axios'
+import Container from '@mui/material/Container'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
+import Button from '@mui/material/Button'
+import Paper from '@mui/material/Paper'
+import CircularProgress from '@mui/material/CircularProgress'
+import BookmarkAddIcon from '@mui/icons-material/BookmarkAdd'
+import BookmarkRemoveIcon from '@mui/icons-material/BookmarkRemove'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import ErrorMessage from '../components/ErrorMessage'
+import NutritionRow from '../components/NutritionRow'
 
-function DetailPage({ saved, dispatch }) {
+function DetailPage() {
   const { barcode } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
+  const dispatch = useDispatch()
+  const savedItems = useSelector((state) => state.saved.items)
 
-  const [product, setProduct] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [product, setProduct] = useState(location.state?.product || null)
+  const [loading, setLoading] = useState(!location.state?.product)
   const [error, setError] = useState(null)
 
-  const isSaved = saved.some((item) => item.code === barcode)
+  const isSaved = savedItems.some((item) => item.code === barcode)
 
   useEffect(() => {
     let cancelled = false
 
     const fetchProduct = async () => {
+      if (product?.code === barcode) {
+        setLoading(false)
+        return
+      }
+
       setLoading(true)
       setError(null)
 
@@ -62,78 +82,98 @@ function DetailPage({ saved, dispatch }) {
     if (!product) return
 
     if (isSaved) {
-      dispatch({ type: 'REMOVE', code: barcode })
+      dispatch(removeItem(barcode))
     } else {
-      dispatch({ type: 'ADD', product })
+      dispatch(addItem(product))
     }
   }
 
   const nutrimentRows = [
-    { label: 'Calories', key: 'energy-kcal_100g', suffix: 'kcal' },
-    { label: 'Protein', key: 'proteins_100g', suffix: 'g' },
-    { label: 'Carbohydrates', key: 'carbohydrates_100g', suffix: 'g' },
-    { label: 'Fat', key: 'fat_100g', suffix: 'g' },
-    { label: 'Sugar', key: 'sugars_100g', suffix: 'g' },
-    { label: 'Salt', key: 'salt_100g', suffix: 'g' },
+    { label: 'Calories', key: 'energy-kcal_100g', unit: ' kcal' },
+    { label: 'Protein', key: 'proteins_100g', unit: ' g' },
+    { label: 'Carbohydrates', key: 'carbohydrates_100g', unit: ' g' },
+    { label: 'Fat', key: 'fat_100g', unit: ' g' },
+    { label: 'Sugar', key: 'sugars_100g', unit: ' g' },
+    { label: 'Salt', key: 'salt_100g', unit: ' g' },
   ]
 
   return (
-    <div className="page app-container detail-page">
-      <button className="back-button" onClick={() => navigate(-1)}>
-        ← Back
-      </button>
+    <Container maxWidth="md" sx={{ py: 4 }}>
+      <Button
+        startIcon={<ArrowBackIcon />}
+        onClick={() => navigate(-1)}
+        sx={{ mb: 3 }}
+      >
+        Back
+      </Button>
 
-      {loading && <p className="loading">Loading product details...</p>}
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <CircularProgress color="primary" />
+        </Box>
+      )}
+
       {error && <ErrorMessage message={error} />}
+
       {!loading && !error && !product && (
-        <p className="empty-state">Product not found or unavailable.</p>
+        <Typography color="text.secondary">Product not found or unavailable.</Typography>
       )}
 
       {!loading && !error && product && (
-        <div className="detail-card">
-          <div className="detail-header">
+        <Paper sx={{ p: 3 }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, mb: 3 }}>
             {product.image_small_url ? (
-              <img
+              <Box
+                component="img"
                 src={product.image_small_url}
                 alt={product.product_name || 'Product image'}
-                className="detail-image"
+                sx={{ width: { xs: '100%', md: 220 }, height: 220, objectFit: 'contain', borderRadius: 2, backgroundColor: '#f8f8f8' }}
               />
             ) : (
-              <div className="detail-image detail-image-placeholder">No image</div>
+              <Box sx={{ width: { xs: '100%', md: 220 }, height: 220, borderRadius: 2, backgroundColor: '#f8f8f8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Typography color="text.secondary">No image</Typography>
+              </Box>
             )}
-
-            <div className="detail-info">
-              <h2>{product.product_name || 'Unknown product'}</h2>
-              {product.brands && <p className="brand">{product.brands}</p>}
-              {product.quantity && <p>Size: {product.quantity}</p>}
-              {product.countries && <p>Countries: {product.countries}</p>}
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="h5" gutterBottom>
+                {product.product_name || 'Unknown product'}
+              </Typography>
+              {product.brands && <Typography color="text.secondary" gutterBottom>{product.brands}</Typography>}
+              {product.quantity && <Typography>Size: {product.quantity}</Typography>}
+              {product.countries && <Typography>Countries: {product.countries}</Typography>}
               {product.ingredients_text && (
-                <p className="ingredients">Ingredients: {product.ingredients_text}</p>
+                <Typography color="text.secondary" sx={{ mt: 1 }}>
+                  Ingredients: {product.ingredients_text}
+                </Typography>
               )}
-            </div>
-          </div>
+              <Button
+                variant={isSaved ? 'outlined' : 'contained'}
+                color={isSaved ? 'secondary' : 'primary'}
+                startIcon={isSaved ? <BookmarkRemoveIcon /> : <BookmarkAddIcon />}
+                onClick={handleSaveToggle}
+                sx={{ mt: 3 }}
+              >
+                {isSaved ? 'Remove from Saved' : 'Save to My List'}
+              </Button>
+            </Box>
+          </Box>
 
-          <section className="nutrition-table">
-            <h3>Nutrition per 100g</h3>
-            <div className="nutrition-grid">
-              {nutrimentRows.map((row) => {
-                const value = product.nutriments?.[row.key]
-                return (
-                  <div key={row.key} className="nutrition-row">
-                    <span>{row.label}</span>
-                    <strong>{value != null ? `${value} ${row.suffix}` : 'N/A'}</strong>
-                  </div>
-                )
-              })}
-            </div>
-          </section>
-
-          <button className="save-button" onClick={handleSaveToggle}>
-            {isSaved ? '★ Remove from Saved' : '☆ Save to My List'}
-          </button>
-        </div>
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Nutrition per 100g
+            </Typography>
+            {nutrimentRows.map((row) => (
+              <NutritionRow
+                key={row.key}
+                label={row.label}
+                value={product.nutriments?.[row.key]}
+                unit={row.unit}
+              />
+            ))}
+          </Box>
+        </Paper>
       )}
-    </div>
+    </Container>
   )
 }
 
