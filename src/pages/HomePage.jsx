@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import Container from '@mui/material/Container'
+import Typography from '@mui/material/Typography'
+import CircularProgress from '@mui/material/CircularProgress'
+import Box from '@mui/material/Box'
 import SearchBar from '../components/SearchBar'
 import FoodList from '../components/FoodList'
 import ErrorMessage from '../components/ErrorMessage'
@@ -14,25 +18,32 @@ function HomePage() {
   }
 
   return (
-    <div className="page app-container">
-      <h2>Search Nutrition Info</h2>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Typography variant="h4" gutterBottom fontWeight={800}>
+        Search Nutrition Info
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+        Type a food name to search real nutrition data.
+      </Typography>
       <SearchBar onSearch={handleSearch} />
-      {loading && <p className="loading">Loading...</p>}
       {error && <ErrorMessage message={error} />}
-      {!loading && !error && (
-        <>
-          {query ? (
-            results.length > 0 ? (
-              <FoodList products={results} />
-            ) : (
-              <p className="empty-state">No results found for “{query}”. Try a different search.</p>
-            )
-          ) : (
-            <p className="empty-state">Search for a food above to see its nutrition info.</p>
-          )}
-        </>
+      {loading && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <CircularProgress color="primary" />
+        </Box>
       )}
-    </div>
+      {!loading && !error && query && results.length === 0 && (
+        <Typography color="text.secondary" sx={{ mt: 4, textAlign: 'center' }}>
+          No results found for “{query}”. Try a different search.
+        </Typography>
+      )}
+      {!loading && !error && !query && (
+        <Typography color="text.secondary" sx={{ mt: 4, textAlign: 'center' }}>
+          Search for a food above to see its nutrition info.
+        </Typography>
+      )}
+      <FoodList products={results} />
+    </Container>
   )
 }
 
