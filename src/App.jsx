@@ -1,45 +1,45 @@
-import { useState } from 'react'
-import SearchBar from './components/SearchBar'
-import FoodList from './components/FoodList'
+import { useReducer } from 'react'
+import { Routes, Route } from 'react-router-dom'
+import NavBar from './components/NavBar'
+import HomePage from './pages/HomePage'
+import DetailPage from './pages/DetailPage'
+import SavedPage from './pages/SavedPage'
+
+function savedReducer(state, action) {
+  switch (action.type) {
+    case 'ADD': {
+      if (!action.product?.code) {
+        return state
+      }
+      const exists = state.some((item) => item.code === action.product.code)
+      if (exists) {
+        return state
+      }
+      return [...state, action.product]
+    }
+    case 'REMOVE':
+      return state.filter((item) => item.code !== action.code)
+    default:
+      return state
+  }
+}
 
 function App() {
-  const [query, setQuery] = useState('')
-  const [results, setResults] = useState([])
-  const [loading, setLoading] = useState(false)
-
-  const handleSearch = async (searchQuery) => {
-    setQuery(searchQuery)
-    setLoading(true)
-
-    try {
-      const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(searchQuery)}&json=1&page_size=10`
-      const response = await fetch(url)
-      const data = await response.json()
-
-      const filteredProducts = data.products ? data.products.filter(p => p.product_name && p.product_name.trim() !== '') : []
-      setResults(filteredProducts)
-
-    } catch (error) {
-      console.error('Something went wrong:', error)
-      setResults([])
-    } finally {
-      setLoading(false)
-    }
-  }
+  const [saved, dispatch] = useReducer(savedReducer, [])
 
   return (
-    <div className="app-container">
-      <h1>🥗 FoodFacts</h1>
-      <SearchBar onSearch={handleSearch} />
-      {loading && <p className="loading">Loading...</p>}
-      {!loading && results.length === 0 && (
-        <p className="empty-state">
-          {query
-            ? `No results found for “${query}”. Try a different search.`
-            : 'Search for a food above to see its nutrition info.'}
-        </p>
-      )}
-      <FoodList products={results} />
+    <div>
+      <NavBar savedCount={saved.length} />
+      <main>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route
+            path="/product/:barcode"
+            element={<DetailPage saved={saved} dispatch={dispatch} />}
+          />
+          <Route path="/saved" element={<SavedPage saved={saved} dispatch={dispatch} />} />
+        </Routes>
+      </main>
     </div>
   )
 }
