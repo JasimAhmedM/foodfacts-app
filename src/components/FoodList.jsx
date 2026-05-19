@@ -1,3 +1,4 @@
+import Grid from '@mui/material/Grid'
 import FoodCard from './FoodCard'
 
 function FoodList({ products }) {
@@ -6,11 +7,13 @@ function FoodList({ products }) {
   }
 
   return (
-    <div className="food-list">
+    <Grid container spacing={3}>
       {products.map((product) => (
-        <FoodCard key={product.code} product={product} />
+        <Grid item xs={12} sm={6} md={4} key={product.code}>
+          <FoodCard product={product} />
+        </Grid>
       ))}
-    </div>
+    </Grid>
   )
 }
 
